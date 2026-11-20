@@ -109,28 +109,16 @@ GitHub in about 5 minutes. No terminal needed.
 
 ### 3b. Create a Cloudflare API token
 
-The API token must have full read and write permissions to deploy your Worker and create/migrate your D1 database:
+The API token must have full read and write permissions to deploy your Worker and create/migrate your D1 database. If it doesn't, the Deploy Worker workflow fails with `Authentication error [code: 10000]` at the "Prepare D1 Database" step.
 
-1. In the Cloudflare dashboard, tap your profile icon → **My Profile** → **API Tokens** → **Create Token**.
-2. Use the **Edit Cloudflare Workers** template.
-3. Under **Permissions**, you must explicitly add D1:
-   - Click **+ Add more**.
-   - Select **Account** → **D1** → **Edit**.
-   - Ensure the token permissions list:
-     - `Account` — `Workers KV Storage` — `Edit`
-     - `Account` — `Workers Scripts` — `Edit`
-     - `Account` — `Workers Tail` — `Read`
-     - `Account` — `D1` — `Edit`
-4. Under **Account Resources**, choose **Include** → **All accounts** (or your specific account).
-5. Continue to summary and click **Create Token**.
-6. **Copy the token immediately** — Cloudflare shows it only once. This token lets GitHub deploy on your behalf; never share it or post it anywhere.
-
-> **Important — What happens if D1 permission is missing:** If the token lacks the `D1: Edit` permission, the Deploy Worker workflow fails with:
-> ```
-> Authentication error [code: 10000]
-> ```
-> at the "Prepare D1 Database" step.
-> **How to check:** In the Cloudflare dashboard, tap your profile icon → **My Profile** → **API Tokens** → view your token → **Permissions** must list `D1: Edit`. If it is missing, click the three dots → **Edit** to add it, or create a new token and update the `CLOUDFLARE_API_TOKEN` repo secret.
+1. In the Cloudflare dashboard, tap your profile icon → **My Profile → API Tokens → Create Token**.
+2. **Token name:** type a name, for example `ShardMail deploy`.
+3. Under **Policies** you will see three blocks: **Edit Account policy**, **Edit Zone policy**, and **Edit User policy**.
+   - **Edit Account policy:** set it to **Include → All accounts**.
+   - **Edit Zone policy:** set it to **Include → Specific zone → select your domain** (for example `yourname.ccwu.cc`).
+   - In each policy block, click **Bulk Select** (top right of the permissions list) → **Add all Read & Write permissions**. Do this for the Account policy, the Zone policy, and the User policy.
+4. Continue to summary and click **Create Token**.
+5. **Copy the token immediately** — Cloudflare shows it only once. This token lets GitHub deploy on your behalf; never share it or post it anywhere.
 
 ### 3c. Find your Cloudflare Account ID
 
