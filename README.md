@@ -46,7 +46,7 @@ anything@yourdomain.com   --->  Catch-all rule
                           - offline cache, OTP copy, bulk delete
 ```
 
-There is no server to rent and nothing running on a computer at home. Cloudflare's
+There is no server to rent and nothing running locally. Cloudflare's
 free tier covers all of it.
 
 ---
@@ -109,30 +109,46 @@ GitHub in about 5 minutes. No terminal needed.
 
 ### 3b. Create a Cloudflare API token
 
-1. In the Cloudflare dashboard, tap your profile icon →
-   **My Profile** → **API Tokens** → **Create Token**.
-2. Use the **Edit Cloudflare Workers** template, then add the **D1: Edit**
-   permission to it. Continue to summary and create the token.
-3. **Copy the token immediately** — Cloudflare shows it only once. This token lets
-   GitHub deploy on your behalf; never share it or post it anywhere.
+The API token must have full read and write permissions to deploy your Worker and create/migrate your D1 database:
+
+1. In the Cloudflare dashboard, tap your profile icon → **My Profile** → **API Tokens** → **Create Token**.
+2. Use the **Edit Cloudflare Workers** template.
+3. Under **Permissions**, you must explicitly add D1:
+   - Click **+ Add more**.
+   - Select **Account** → **D1** → **Edit**.
+   - Ensure the token permissions list:
+     - `Account` — `Workers KV Storage` — `Edit`
+     - `Account` — `Workers Scripts` — `Edit`
+     - `Account` — `Workers Tail` — `Read`
+     - `Account` — `D1` — `Edit`
+4. Under **Account Resources**, choose **Include** → **All accounts** (or your specific account).
+5. Continue to summary and click **Create Token**.
+6. **Copy the token immediately** — Cloudflare shows it only once. This token lets GitHub deploy on your behalf; never share it or post it anywhere.
+
+> **Important — What happens if D1 permission is missing:** If the token lacks the `D1: Edit` permission, the Deploy Worker workflow fails with:
+> ```
+> Authentication error [code: 10000]
+> ```
+> at the "Prepare D1 Database" step.
+> **How to check:** In the Cloudflare dashboard, tap your profile icon → **My Profile** → **API Tokens** → view your token → **Permissions** must list `D1: Edit`. If it is missing, click the three dots → **Edit** to add it, or create a new token and update the `CLOUDFLARE_API_TOKEN` repo secret.
 
 ### 3c. Find your Cloudflare Account ID
 
-On the Cloudflare dashboard home, or on the **Workers & Pages** page, your Account
-ID is shown on the right side. It is a long hex string. Copy it.
+While logged into the Cloudflare dashboard from any browser:
+1. The Account ID is the long hex string shown directly in your browser URL:
+   `dash.cloudflare.com/<account-id>/...`
+2. It is also displayed on the dashboard home page and on the right-hand sidebar of the **Workers & Pages** overview under **Account ID**. Copy this string.
 
 ### 3d. Add three secrets to your fork
 
-1. In your fork on GitHub: **Settings** → **Secrets and variables** → **Actions**
-   → **New repository secret**. Add each of these:
+1. In your fork on GitHub: **Settings** → **Secrets and variables** → **Actions** → **New repository secret**. Add each of these:
    - `CLOUDFLARE_API_TOKEN` — the token from step 3b.
    - `CLOUDFLARE_ACCOUNT_ID` — the ID from step 3c.
-   - `ADMIN_TOKEN` — a strong password **you invent**. This is your app's admin
-     password. Make it long and random (for example 24+ letters and numbers) and
-     save it somewhere safe. You will type this same password into the app later.
+   - `ADMIN_TOKEN` — a strong password **you invent**. This is your app's admin password. Make it long and random (for example 24+ letters and numbers) and save it somewhere safe. You will type this same password into the app later.
 2. Secrets are never shown again after saving and never appear in logs.
 
-> **Note:** The API token and the account ID must be from the SAME Cloudflare account, and the `ADMIN_TOKEN` secret is a password the user invents. The workflow automatically creates the D1 database, resolves its database ID, and handles all configuration without any manual file edits.
+> **Warning — Same Account Rule:** The `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets must belong to the **SAME** Cloudflare account.
+> If they are mixed (for example, the token was created under one account, but the account ID was copied from another), the deploy fails with `[10000]` on `d1 create` and `[7403]` on migrations, even though the token appears to log in fine. Ensure both the token and the account ID originate from the same Cloudflare account.
 
 ### 3e. Run the deploy workflow
 
@@ -158,15 +174,17 @@ ID is shown on the right side. It is a long hex string. Copy it.
 
 ## Part 4 — Connect Email Routing (catch-all)
 
-This tells Cloudflare to send all mail for your domain to the Worker.
+This routes all incoming mail for your domain directly into the Worker.
+
+> **Note:** The domain's zone must be **Active** in Cloudflare first (nameservers pointed at Cloudflare from Part 2), and mail only flows after the catch-all rule is **Active**.
 
 1. In the Cloudflare dashboard, open your domain → **Email** → **Email Routing**.
-2. If it asks, click **Enable** and let it add the DNS records it proposes.
-3. Go to **Routing rules** → **Catch-all** → **Edit**.
-4. Set the Action to **Send to a Worker** and select **`shardmail-worker`**.
-5. Save. The rule status must show **Active**.
-6. From now on, **every** address works — `test@`, `shop@`, `anything@` your domain.
-   The aliases you create in the app are just names to keep track of them.
+2. Click **Onboard Domain** (or **Enable** / **Get started**). Select the zone (your domain, for example `yourname.ccwu.cc`) → **Continue**.
+3. **Verify DNS records:** Cloudflare proposes the required MX and TXT records — review them and click **Activate** (or **Add records and enable**).
+4. Once enabled, go to **Routing rules** → under **Catch-all**, click **Edit**.
+5. Set the Action to **Send to a Worker** and select **`shardmail-worker`** → click **Save**.
+6. **Check the rule shows Status: Active:** Ensure the toggle switch next to Catch-all is ON (`Active`). If the toggle is off, no mail arrives.
+7. From now on, **every** address works — `test@`, `shop@`, `anything@` your domain. The aliases you create in the app are just names to keep track of them.
 
 ---
 
