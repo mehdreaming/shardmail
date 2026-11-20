@@ -135,9 +135,6 @@ While logged into the Cloudflare dashboard from any browser:
    - `ADMIN_TOKEN` — a strong password **you invent**. This is your app's admin password. Make it long and random (for example 24+ letters and numbers) and save it somewhere safe. You will type this same password into the app later.
 2. Secrets are never shown again after saving and never appear in logs.
 
-> **Warning — Same Account Rule:** The `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets must belong to the **SAME** Cloudflare account.
-> If they are mixed (for example, the token was created under one account, but the account ID was copied from another), the deploy fails with `[10000]` on `d1 create` and `[7403]` on migrations, even though the token appears to log in fine. Ensure both the token and the account ID originate from the same Cloudflare account.
-
 ### 3e. Run the deploy workflow
 
 1. In your fork: **Actions** tab → **Deploy Worker** workflow (left sidebar) →
