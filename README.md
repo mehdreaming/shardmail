@@ -137,8 +137,7 @@ While logged into the Cloudflare dashboard from any browser:
 
 ### 3e. Run the deploy workflow
 
-1. In your fork: **Actions** tab → **Deploy Worker** workflow (left sidebar) →
-   **Run workflow** → **Run workflow**.
+1. In your fork: **Actions** tab → **Deploy Cloudflare Worker** (left sidebar) → click the green **Run workflow** button → **Run workflow**.
 2. Wait for the run to finish (about 1–2 minutes). It creates the D1 database,
    runs the migrations, deploys the Worker, and checks `/health`.
 3. Tap the finished run and open the log. Near the end it prints your Worker URL:
@@ -154,6 +153,13 @@ While logged into the Cloudflare dashboard from any browser:
 > `npx wrangler d1 migrations apply shardmail-db --remote` →
 > `npx wrangler secret put ADMIN_TOKEN` (type the same password as in step 3d) →
 > `npx wrangler deploy`. The result is identical.
+
+### GitHub Actions workflows
+
+The repo has two workflows, both under the **Actions** tab:
+
+- **Deploy Cloudflare Worker** — deploys the backend (Worker + D1 database). This one is run manually: Actions tab → **Deploy Cloudflare Worker** (left sidebar) → green **Run workflow** button → **Run workflow**. It needs the three secrets from Part 3d (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, ADMIN_TOKEN) and prints the Worker URL near the end of the run log.
+- **Android CI & Release** — runs automatically on every push to main: it builds the debug APK and attaches it to the release. No manual run needed.
 
 ---
 
