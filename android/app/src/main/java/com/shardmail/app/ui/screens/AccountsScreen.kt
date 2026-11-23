@@ -65,6 +65,7 @@ fun AccountsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .padding(top = 8.dp)
     ) {
         // Sticky Search Pill (placeholder "Search accounts")

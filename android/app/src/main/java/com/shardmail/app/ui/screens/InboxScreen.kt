@@ -123,6 +123,7 @@ fun InboxScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .padding(top = 8.dp)
     ) {
         if (!selectedAccountFilter.isNullOrBlank() && !isSelectionMode) {

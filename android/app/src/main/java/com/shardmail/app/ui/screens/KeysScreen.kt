@@ -81,6 +81,7 @@ fun KeysScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 16.dp)
             .padding(bottom = 120.dp), // 120dp bottom clearance for nav bar

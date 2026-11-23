@@ -46,34 +46,22 @@ fun LoadingScreen(
     onSuccess: () -> Unit,
     onFallbackCached: () -> Unit,
     onCheckKeys: () -> Unit,
-    onNext: () -> Unit = onSuccess,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var hasNavigated by remember { mutableStateOf(false) }
-
-    fun navigateToInbox() {
-        if (!hasNavigated) {
-            hasNavigated = true
-            onNext()
-        }
-    }
 
     fun loadInboxData() {
         isLoading = true
         errorMessage = null
         scope.launch {
             val result = repository.loadEverything()
-            if (hasNavigated) return@launch
             isLoading = false
             if (result.success) {
-                hasNavigated = true
                 onSuccess()
             } else {
                 if (result.cachedMessageCount > 0) {
-                    hasNavigated = true
                     onFallbackCached()
                 } else {
                     errorMessage = result.error ?: "Network error"
@@ -96,12 +84,13 @@ fun LoadingScreen(
         if (isLoading) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                // Logo
+                // Branded Logo in Lavender Circle
                 Box(
                     modifier = Modifier
-                        .size(72.dp)
+                        .size(80.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
@@ -110,45 +99,47 @@ fun LoadingScreen(
                         imageVector = Icons.Outlined.Mail,
                         contentDescription = "ShardMail",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(42.dp)
                     )
                 }
 
-                CircularProgressIndicator(
-                    modifier = Modifier.size(36.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 3.dp
-                )
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Loading your inbox…",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium
+                    text = "ShardMail",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Next button: Always visible while loading to proceed immediately to inbox
-                Box(
-                    modifier = Modifier
-                        .clip(FullShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .pressScale { navigateToInbox() }
-                        .padding(horizontal = 40.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Next",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
+                Text(
+                    text = "Custom-domain email for Android",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(44.dp))
+
+                CircularProgressIndicator(
+                    modifier = Modifier.size(34.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3.dp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Loading your inbox…",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         } else if (errorMessage != null) {
             // Full-screen error state when network fails and cache is empty
@@ -247,23 +238,6 @@ fun LoadingScreen(
                             )
                         }
                     }
-                }
-
-                // Next Button in error state
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(46.dp)
-                        .clip(FullShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        .pressScale { navigateToInbox() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Next",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
                 }
             }
         }

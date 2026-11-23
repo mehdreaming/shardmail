@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -120,6 +122,7 @@ fun ShardMailMain(
     var lastRefreshError by remember { mutableStateOf<String?>(null) }
     var isInboxSelectionMode by remember { mutableStateOf(false) }
     var currentDomain by remember { mutableStateOf(securePreferences.customDomain) }
+    var lastTabSwitchTime by remember { mutableStateOf(0L) }
 
     androidx.compose.runtime.LaunchedEffect(drawerState.isOpen) {
         if (drawerState.isOpen) {
@@ -196,32 +199,21 @@ fun ShardMailMain(
                 onNavigate = { screen ->
                     scope.launch {
                         drawerState.close()
-                        when (screen) {
-                            Screen.Inbox -> {
-                                navController.navigate(Screen.Inbox.route) {
-                                    popUpTo(Screen.Inbox.route) { inclusive = true }
-                                }
+                        if (currentRoute == screen.route) {
+                            if (screen == Screen.Inbox && selectedAccountFilter != null) {
+                                selectedAccountFilter = null
                             }
-                            Screen.Accounts -> {
-                                navController.navigate(Screen.Accounts.route) {
-                                    launchSingleTop = true
-                                }
+                            return@launch
+                        }
+                        if (screen == Screen.Inbox) {
+                            selectedAccountFilter = null
+                        }
+                        navController.navigate(screen.route) {
+                            popUpTo(Screen.Inbox.route) {
+                                saveState = true
                             }
-                            Screen.Keys -> {
-                                navController.navigate(Screen.Keys.route) {
-                                    launchSingleTop = true
-                                }
-                            }
-                            Screen.SetupTest -> {
-                                navController.navigate(Screen.SetupTest.route) {
-                                    launchSingleTop = true
-                                }
-                            }
-                            else -> {
-                                navController.navigate(screen.route) {
-                                    launchSingleTop = true
-                                }
-                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
                     }
                 }
@@ -231,32 +223,45 @@ fun ShardMailMain(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface)
                 .statusBarsPadding()
                 .navigationBarsPadding()
         ) {
             Scaffold(
+                containerColor = MaterialTheme.colorScheme.surface,
                 bottomBar = {
                     if (isMainScreen && !isMessageDetailOpen) {
                         ShardBottomNavBar(
                             selectedTab = currentTab,
                             hasUnread = unreadCount > 0,
                             onTabSelected = { tab ->
-                                when (tab) {
-                                    BottomNavTab.INBOX -> {
-                                        navController.navigate(Screen.Inbox.route) {
-                                            popUpTo(Screen.Inbox.route) { inclusive = true }
-                                        }
+                                val targetRoute = when (tab) {
+                                    BottomNavTab.INBOX -> Screen.Inbox.route
+                                    BottomNavTab.ACCOUNTS -> Screen.Accounts.route
+                                    BottomNavTab.KEYS -> Screen.Keys.route
+                                }
+                                val now = System.currentTimeMillis()
+                                if (currentRoute == targetRoute) {
+                                    if (tab == BottomNavTab.INBOX && selectedAccountFilter != null) {
+                                        selectedAccountFilter = null
                                     }
-                                    BottomNavTab.ACCOUNTS -> {
-                                        navController.navigate(Screen.Accounts.route) {
-                                            launchSingleTop = true
-                                        }
+                                    return@ShardBottomNavBar
+                                }
+                                if (now - lastTabSwitchTime < 250L) {
+                                    return@ShardBottomNavBar
+                                }
+                                lastTabSwitchTime = now
+
+                                if (tab == BottomNavTab.INBOX) {
+                                    selectedAccountFilter = null
+                                }
+
+                                navController.navigate(targetRoute) {
+                                    popUpTo(Screen.Inbox.route) {
+                                        saveState = true
                                     }
-                                    BottomNavTab.KEYS -> {
-                                        navController.navigate(Screen.Keys.route) {
-                                            launchSingleTop = true
-                                        }
-                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
                             }
                         )
@@ -295,8 +300,13 @@ fun ShardMailMain(
                 NavHost(
                     navController = navController,
                     startDestination = startDestination,
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None },
+                    popExitTransition = { ExitTransition.None },
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(paddingValues)
                 ) {
                     composable(Screen.Greeting.route) {
@@ -342,11 +352,6 @@ fun ShardMailMain(
                             },
                             onCheckKeys = {
                                 navController.navigate(Screen.Keys.route)
-                            },
-                            onNext = {
-                                navController.navigate(Screen.Inbox.route) {
-                                    popUpTo(Screen.Loading.route) { inclusive = true }
-                                }
                             }
                         )
                     }
