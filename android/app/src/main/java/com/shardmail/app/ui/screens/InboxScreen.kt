@@ -16,8 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +38,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shardmail.app.data.local.MessageEntity
@@ -120,6 +125,44 @@ fun InboxScreen(
             .fillMaxSize()
             .padding(top = 8.dp)
     ) {
+        if (!selectedAccountFilter.isNullOrBlank() && !isSelectionMode) {
+            // Proper Top App Bar with back arrow for per-account inbox
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                IconButton(
+                    onClick = onBackFromAccountInbox,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = selectedAccountFilter,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "Account inbox",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         // Sticky Search Pill OR Selection Top Bar (50dp height)
         Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
             if (isSelectionMode) {
@@ -192,8 +235,9 @@ fun InboxScreen(
                     isRefreshing = isRefreshing,
                     onRefresh = onRefresh,
                     onMenuClick = onMenuClick,
-                    showBackButton = !selectedAccountFilter.isNullOrBlank(),
-                    onBackClick = onBackFromAccountInbox
+                    leadingIcon = if (!selectedAccountFilter.isNullOrBlank()) Icons.Outlined.Search else Icons.Outlined.Menu,
+                    leadingIconContentDescription = if (!selectedAccountFilter.isNullOrBlank()) "Search" else "Open navigation menu",
+                    leadingIconClickable = selectedAccountFilter.isNullOrBlank()
                 )
             }
         }

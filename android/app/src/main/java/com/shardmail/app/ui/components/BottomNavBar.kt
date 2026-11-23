@@ -42,7 +42,7 @@ enum class BottomNavTab(val label: String, val icon: ImageVector) {
 
 @Composable
 fun ShardBottomNavBar(
-    selectedTab: BottomNavTab,
+    selectedTab: BottomNavTab?,
     onTabSelected: (BottomNavTab) -> Unit,
     hasUnread: Boolean = false,
     modifier: Modifier = Modifier

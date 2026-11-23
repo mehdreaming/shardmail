@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Refresh
@@ -34,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shardmail.app.theme.FullShape
@@ -46,8 +46,9 @@ fun SearchPill(
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     onMenuClick: () -> Unit = {},
-    showBackButton: Boolean = false,
-    onBackClick: () -> Unit = {},
+    leadingIcon: ImageVector = Icons.Outlined.Menu,
+    leadingIconContentDescription: String = "Open navigation menu",
+    leadingIconClickable: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "rotation")
@@ -70,17 +71,31 @@ fun SearchPill(
             .padding(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left button: Back button if in sub-screen/account view, else hamburger menu
-        IconButton(
-            onClick = if (showBackButton) onBackClick else onMenuClick,
-            modifier = Modifier.size(40.dp)
-        ) {
-            Icon(
-                imageVector = if (showBackButton) Icons.AutoMirrored.Outlined.ArrowBack else Icons.Outlined.Menu,
-                contentDescription = if (showBackButton) "Back" else "Open navigation menu",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(24.dp)
-            )
+        // Left icon: Hamburger button (default) or static search icon
+        if (leadingIconClickable) {
+            IconButton(
+                onClick = onMenuClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = leadingIconContentDescription,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        } else {
+            Box(
+                modifier = Modifier.size(40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = leadingIconContentDescription,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
 
         // Center text field

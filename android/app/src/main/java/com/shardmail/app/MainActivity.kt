@@ -137,10 +137,11 @@ fun ShardMailMain(
             currentRoute == Screen.SetupTest.route ||
             currentRoute == Screen.About.route
 
-    val currentTab = when {
-        currentRoute == Screen.Accounts.route -> BottomNavTab.ACCOUNTS
-        currentRoute == Screen.Keys.route || currentRoute == Screen.SetupTest.route -> BottomNavTab.KEYS
-        else -> BottomNavTab.INBOX
+    val currentTab = when (currentRoute) {
+        Screen.Inbox.route -> BottomNavTab.INBOX
+        Screen.Accounts.route -> BottomNavTab.ACCOUNTS
+        Screen.Keys.route, Screen.SetupTest.route -> BottomNavTab.KEYS
+        else -> null
     }
 
     val isMessageDetailOpen = currentRoute?.startsWith("message_detail") == true
@@ -341,6 +342,11 @@ fun ShardMailMain(
                             },
                             onCheckKeys = {
                                 navController.navigate(Screen.Keys.route)
+                            },
+                            onNext = {
+                                navController.navigate(Screen.Inbox.route) {
+                                    popUpTo(Screen.Loading.route) { inclusive = true }
+                                }
                             }
                         )
                     }

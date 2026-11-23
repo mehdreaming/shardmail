@@ -46,22 +46,34 @@ fun LoadingScreen(
     onSuccess: () -> Unit,
     onFallbackCached: () -> Unit,
     onCheckKeys: () -> Unit,
+    onNext: () -> Unit = onSuccess,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var hasNavigated by remember { mutableStateOf(false) }
+
+    fun navigateToInbox() {
+        if (!hasNavigated) {
+            hasNavigated = true
+            onNext()
+        }
+    }
 
     fun loadInboxData() {
         isLoading = true
         errorMessage = null
         scope.launch {
             val result = repository.loadEverything()
+            if (hasNavigated) return@launch
             isLoading = false
             if (result.success) {
+                hasNavigated = true
                 onSuccess()
             } else {
                 if (result.cachedMessageCount > 0) {
+                    hasNavigated = true
                     onFallbackCached()
                 } else {
                     errorMessage = result.error ?: "Network error"
@@ -84,7 +96,7 @@ fun LoadingScreen(
         if (isLoading) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // Logo
                 Box(
@@ -116,6 +128,27 @@ fun LoadingScreen(
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Next button: Always visible while loading to proceed immediately to inbox
+                Box(
+                    modifier = Modifier
+                        .clip(FullShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .pressScale { navigateToInbox() }
+                        .padding(horizontal = 40.dp, vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Next",
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         } else if (errorMessage != null) {
             // Full-screen error state when network fails and cache is empty
@@ -214,6 +247,23 @@ fun LoadingScreen(
                             )
                         }
                     }
+                }
+
+                // Next Button in error state
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .clip(FullShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .pressScale { navigateToInbox() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Next",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }

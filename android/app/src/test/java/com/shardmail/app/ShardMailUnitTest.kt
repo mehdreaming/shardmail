@@ -1,5 +1,6 @@
 package com.shardmail.app
 
+import com.shardmail.app.ui.components.BottomNavTab
 import com.shardmail.app.ui.components.DrawerDestination
 import com.shardmail.app.ui.navigation.Screen
 import com.shardmail.app.ui.screens.validateWorkerUrlInput
@@ -104,5 +105,24 @@ class ShardMailUnitTest {
         val destinations = DrawerDestination.entries.map { it.screen }
         assertTrue(destinations.contains(Screen.About))
         assertEquals("About", DrawerDestination.ABOUT.label)
+    }
+
+    @Test
+    fun testBottomNavSelectionState() {
+        fun resolveTab(route: String?): BottomNavTab? = when (route) {
+            Screen.Inbox.route -> BottomNavTab.INBOX
+            Screen.Accounts.route -> BottomNavTab.ACCOUNTS
+            Screen.Keys.route, Screen.SetupTest.route -> BottomNavTab.KEYS
+            else -> null
+        }
+
+        assertEquals(BottomNavTab.INBOX, resolveTab(Screen.Inbox.route))
+        assertEquals(BottomNavTab.ACCOUNTS, resolveTab(Screen.Accounts.route))
+        assertEquals(BottomNavTab.KEYS, resolveTab(Screen.Keys.route))
+        assertEquals(BottomNavTab.KEYS, resolveTab(Screen.SetupTest.route))
+        assertNull(resolveTab(Screen.About.route))
+        assertNull(resolveTab(Screen.Greeting.route))
+        assertNull(resolveTab(Screen.Loading.route))
+        assertNull(resolveTab("unknown_route"))
     }
 }
