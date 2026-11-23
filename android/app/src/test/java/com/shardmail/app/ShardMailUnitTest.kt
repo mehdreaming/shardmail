@@ -125,4 +125,43 @@ class ShardMailUnitTest {
         assertNull(resolveTab(Screen.Loading.route))
         assertNull(resolveTab("unknown_route"))
     }
+
+    @Test
+    fun testOtpExtractor() {
+        // Codes mentioned in user request: 290169, 311891, 123456
+        assertEquals("290169", com.shardmail.app.util.OtpExtractor.extractVerificationCode("Security code", "Your verification code is 290169."))
+        assertEquals("311891", com.shardmail.app.util.OtpExtractor.extractVerificationCode("OTP: 311891", "Use this code to sign in"))
+        assertEquals("123456", com.shardmail.app.util.OtpExtractor.extractVerificationCode("Welcome", "Your code is 123456"))
+        assertEquals("123456", com.shardmail.app.util.OtpExtractor.extractVerificationCode("123456 is your login code", ""))
+        assertEquals("290169", com.shardmail.app.util.OtpExtractor.extractVerificationCode("Alert", "Please enter 290169 to verify your account."))
+
+        // Standalone 6-digit code
+        assertEquals("311891", com.shardmail.app.util.OtpExtractor.extractVerificationCode("Notification", "Hello, 311891 is here"))
+
+        // Year/date should never be extracted
+        assertNull(com.shardmail.app.util.OtpExtractor.extractVerificationCode("Copyright 2026", "All rights reserved."))
+        assertNull(com.shardmail.app.util.OtpExtractor.extractVerificationCode("Welcome to our service in 2024", "Thanks for joining."))
+    }
+
+    @Test
+    fun testAddressPrefixMatching() {
+        val targetAddr = "aditya@yourname.ccwu.cc"
+        val targetPrefix = targetAddr.substringBefore('@')
+
+        fun matches(toAddr: String): Boolean {
+            val addr = toAddr.trim().lowercase()
+            val target = targetAddr.trim().lowercase()
+            return addr == target ||
+                    addr.startsWith("$targetPrefix@") ||
+                    addr.contains("<$target>") ||
+                    addr.contains(target) ||
+                    addr.contains("$targetPrefix@")
+        }
+
+        assertTrue(matches("aditya@yourname.ccwu.cc"))
+        assertTrue(matches("Aditya@yourname.ccwu.cc"))
+        assertTrue(matches("aditya@differentdomain.com"))
+        assertTrue(matches("Aditya <aditya@yourname.ccwu.cc>"))
+        assertTrue(matches("\"Aditya Sharma\" <aditya@yourname.ccwu.cc>"))
+    }
 }

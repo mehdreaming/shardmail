@@ -183,9 +183,11 @@ fun MailRow(
                     }
 
                     // OTP Chip
-                    if (!message.code.isNullOrBlank()) {
+                    val effectiveOtp = message.code?.takeIf { it.isNotBlank() }
+                        ?: com.shardmail.app.util.OtpExtractor.extractVerificationCode(message.subject, message.text)
+                    if (!effectiveOtp.isNullOrBlank()) {
                         OtpChip(
-                            code = message.code,
+                            code = effectiveOtp,
                             onCopied = onOtpCopied
                         )
                     }

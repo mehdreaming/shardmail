@@ -126,16 +126,17 @@ fun MessageDetailScreen(
             }
         } else if (message != null) {
             val msg = message!!
+            val effectiveCode = msg.code?.takeIf { it.isNotBlank() }
+                ?: com.shardmail.app.util.OtpExtractor.extractVerificationCode(msg.subject, msg.text)
             val avatarColors = getAvatarColorPair(msg.fromAddr, msg.toAddr)
             val senderInitial = (msg.fromAddr.firstOrNull { it.isLetter() } ?: 'M').uppercaseChar().toString()
 
+            // Header Section: Subject, Sender info, OTP Card, Segmented Toggle
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-                    .padding(bottom = 80.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Subject (Title Large 22sp / 400 / 28lh)
                 Text(
@@ -204,7 +205,7 @@ fun MessageDetailScreen(
                 }
 
                 // OTP Card (Large verification code box if code detected)
-                if (!msg.code.isNullOrBlank()) {
+                if (!effectiveCode.isNullOrBlank()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -223,7 +224,7 @@ fun MessageDetailScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = msg.code,
+                                text = effectiveCode,
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontSize = 32.sp,
                                     fontWeight = FontWeight.Bold,
@@ -239,8 +240,8 @@ fun MessageDetailScreen(
                                     .background(MaterialTheme.colorScheme.primary)
                                     .pressScale {
                                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                        clipboard.setPrimaryClip(ClipData.newPlainText("OTP Code", msg.code))
-                                        onShowSnackbar("Copied code: ${msg.code}")
+                                        clipboard.setPrimaryClip(ClipData.newPlainText("OTP Code", effectiveCode))
+                                        onShowSnackbar("Copied code: $effectiveCode")
                                     }
                                     .padding(horizontal = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -308,25 +309,67 @@ fun MessageDetailScreen(
                         }
                     }
                 }
+            }
 
-                HorizontalDivider(color = HairlineDividerColor, thickness = 0.5.dp)
+            HorizontalDivider(color = HairlineDividerColor, thickness = 0.5.dp)
 
-                // Message Body View
-                if (isHtmlView && msg.html.isNotBlank()) {
-                    AndroidView(
-                        factory = { ctx ->
-                            WebView(ctx).apply {
-                                settings.javaScriptEnabled = false
-                                settings.loadWithOverviewMode = true
-                                settings.useWideViewPort = true
-                                loadDataWithBaseURL(null, msg.html, "text/html", "UTF-8", null)
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(400.dp)
-                    )
-                } else {
+            // Message Body View
+            if (isHtmlView && msg.html.isNotBlank()) {
+                val styledHtml = remember(msg.html) {
+                    """
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            color: #1F1F1F;
+                            margin: 0;
+                            padding: 12px 16px 80px 16px;
+                            word-wrap: break-word;
+                        }
+                        img { max-width: 100%; height: auto; }
+                        table { max-width: 100% !important; }
+                    </style>
+                    </head>
+                    <body>
+                        ${msg.html}
+                    </body>
+                    </html>
+                    """.trimIndent()
+                }
+
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = false
+                            settings.loadWithOverviewMode = true
+                            settings.useWideViewPort = true
+                            settings.builtInZoomControls = true
+                            settings.displayZoomControls = false
+                            isVerticalScrollBarEnabled = true
+                            loadDataWithBaseURL(null, styledHtml, "text/html", "UTF-8", null)
+                        }
+                    },
+                    update = { webView ->
+                        webView.loadDataWithBaseURL(null, styledHtml, "text/html", "UTF-8", null)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                        .padding(bottom = 80.dp)
+                ) {
                     Text(
                         text = msg.text.ifBlank { msg.html },
                         style = MaterialTheme.typography.bodyMedium.copy(

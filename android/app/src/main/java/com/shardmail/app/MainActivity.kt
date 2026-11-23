@@ -10,6 +10,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,8 +55,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.shardmail.app.theme.M3Easing
-import com.shardmail.app.theme.MotionDetailDuration
 import com.shardmail.app.theme.ShardMailTheme
 import com.shardmail.app.ui.components.BottomNavTab
 import com.shardmail.app.ui.components.CreateAccountBottomSheet
@@ -199,6 +198,7 @@ fun ShardMailMain(
                 onNavigate = { screen ->
                     scope.launch {
                         drawerState.close()
+                        drawerState.snapTo(DrawerValue.Closed)
                         if (currentRoute == screen.route) {
                             if (screen == Screen.Inbox && selectedAccountFilter != null) {
                                 selectedAccountFilter = null
@@ -300,10 +300,30 @@ fun ShardMailMain(
                 NavHost(
                     navController = navController,
                     startDestination = startDestination,
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None },
-                    popEnterTransition = { EnterTransition.None },
-                    popExitTransition = { ExitTransition.None },
+                    enterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = tween(280, easing = FastOutSlowInEasing)
+                        )
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = tween(280, easing = FastOutSlowInEasing)
+                        )
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = tween(280, easing = FastOutSlowInEasing)
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = tween(280, easing = FastOutSlowInEasing)
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxSize()
                         .background(MaterialTheme.colorScheme.surface)
@@ -362,7 +382,9 @@ fun ShardMailMain(
                             selectedAccountFilter = selectedAccountFilter,
                             onClearAccountFilter = { selectedAccountFilter = null },
                             onOpenMessage = { id ->
-                                navController.navigate(Screen.MessageDetail.createRoute(id))
+                                navController.navigate(Screen.MessageDetail.createRoute(id)) {
+                                    launchSingleTop = true
+                                }
                             },
                             onShowSnackbar = { msg ->
                                 scope.launch {
@@ -408,7 +430,7 @@ fun ShardMailMain(
                             onOpenAccountInbox = { address ->
                                 selectedAccountFilter = address
                                 navController.navigate(Screen.Inbox.route) {
-                                    popUpTo(Screen.Inbox.route) { inclusive = true }
+                                    launchSingleTop = true
                                 }
                             },
                             onOpenCreateSheet = { showCreateSheet = true },
@@ -470,19 +492,7 @@ fun ShardMailMain(
 
                     composable(
                         route = Screen.MessageDetail.route,
-                        arguments = listOf(navArgument("messageId") { type = NavType.StringType }),
-                        enterTransition = {
-                            slideInHorizontally(
-                                initialOffsetX = { it },
-                                animationSpec = tween(MotionDetailDuration, easing = M3Easing)
-                            )
-                        },
-                        exitTransition = {
-                            slideOutHorizontally(
-                                targetOffsetX = { it },
-                                animationSpec = tween(MotionDetailDuration, easing = M3Easing)
-                            )
-                        }
+                        arguments = listOf(navArgument("messageId") { type = NavType.StringType })
                     ) { backStackEntry ->
                         val messageId = backStackEntry.arguments?.getString("messageId") ?: ""
                         MessageDetailScreen(

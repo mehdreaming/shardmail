@@ -68,23 +68,38 @@ class MailRepository(
     }
 
     fun getMessages(search: String = "", toAddress: String = ""): Flow<List<MessageEntity>> {
-        val baseFlow = if (toAddress.isBlank()) {
-            messageDao.getAllMessages()
+        val baseFlow = messageDao.getAllMessages()
+
+        val accountFilteredFlow = if (toAddress.isBlank()) {
+            baseFlow
         } else {
-            messageDao.getMessagesForAddress(toAddress, "$toAddress%")
+            val targetAddr = toAddress.trim().lowercase()
+            val targetPrefix = targetAddr.substringBefore('@')
+            baseFlow.map { list ->
+                list.filter { msg ->
+                    val addr = msg.toAddr.trim().lowercase()
+                    addr == targetAddr ||
+                    addr.startsWith("$targetPrefix@") ||
+                    addr.contains("<$targetAddr>") ||
+                    addr.contains(targetAddr) ||
+                    addr.contains("$targetPrefix@")
+                }
+            }
         }
 
         return if (search.isBlank()) {
-            baseFlow
+            accountFilteredFlow
         } else {
-            baseFlow.map { list ->
+            accountFilteredFlow.map { list ->
                 val q = search.trim().lowercase()
                 list.filter { msg ->
+                    val code = msg.code?.takeIf { it.isNotBlank() }
+                        ?: com.shardmail.app.util.OtpExtractor.extractVerificationCode(msg.subject, msg.text)
                     msg.subject.lowercase().contains(q) ||
                     msg.fromAddr.lowercase().contains(q) ||
                     msg.toAddr.lowercase().contains(q) ||
                     msg.text.lowercase().contains(q) ||
-                    (msg.code != null && msg.code.contains(q))
+                    (code != null && code.contains(q))
                 }
             }
         }
@@ -119,6 +134,8 @@ class MailRepository(
             if (response.isSuccessful && response.body()?.ok == true) {
                 val dtos = response.body()?.messages ?: emptyList()
                 val entities = dtos.map { dto ->
+                    val effectiveCode = dto.code?.takeIf { it.isNotBlank() }
+                        ?: com.shardmail.app.util.OtpExtractor.extractVerificationCode(dto.subject, dto.text ?: "")
                     MessageEntity(
                         id = dto.id,
                         fromAddr = dto.from_addr,
@@ -126,7 +143,7 @@ class MailRepository(
                         subject = dto.subject,
                         text = dto.text ?: "",
                         html = "",
-                        code = dto.code,
+                        code = effectiveCode,
                         date = dto.date ?: "",
                         createdAt = dto.created_at ?: "",
                         read = dto.read
@@ -166,6 +183,8 @@ class MailRepository(
                 val dto = response.body()?.message
                     ?: return Result.failure(Exception("Empty message body"))
 
+                val effectiveCode = dto.code?.takeIf { it.isNotBlank() }
+                    ?: com.shardmail.app.util.OtpExtractor.extractVerificationCode(dto.subject, dto.text ?: "")
                 val entity = MessageEntity(
                     id = dto.id,
                     fromAddr = dto.from_addr,
@@ -173,7 +192,7 @@ class MailRepository(
                     subject = dto.subject,
                     text = dto.text ?: "",
                     html = dto.html ?: "",
-                    code = dto.code,
+                    code = effectiveCode,
                     date = dto.date ?: "",
                     createdAt = dto.created_at ?: "",
                     read = 1

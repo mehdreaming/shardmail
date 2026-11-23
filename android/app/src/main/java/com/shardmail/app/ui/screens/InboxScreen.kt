@@ -88,6 +88,7 @@ fun InboxScreen(
     var selectedMessageIds by remember { mutableStateOf(setOf<String>()) }
     val isSelectionMode = selectedMessageIds.isNotEmpty()
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var lastMessageClickTime by remember { mutableStateOf(0L) }
 
     LaunchedEffect(isSelectionMode) {
         onSelectionModeChange(isSelectionMode)
@@ -116,7 +117,11 @@ fun InboxScreen(
         when (activeFilter) {
             MailFilter.ALL -> allMessages
             MailFilter.UNREAD -> allMessages.filter { it.read == 0 }
-            MailFilter.HAS_OTP -> allMessages.filter { !it.code.isNullOrBlank() }
+            MailFilter.HAS_OTP -> allMessages.filter { msg ->
+                val code = msg.code?.takeIf { it.isNotBlank() }
+                    ?: com.shardmail.app.util.OtpExtractor.extractVerificationCode(msg.subject, msg.text)
+                !code.isNullOrBlank()
+            }
         }
     }
 
@@ -322,7 +327,11 @@ fun InboxScreen(
                                     selectedMessageIds + message.id
                                 }
                             } else {
-                                onOpenMessage(message.id)
+                                val now = System.currentTimeMillis()
+                                if (now - lastMessageClickTime >= 350L) {
+                                    lastMessageClickTime = now
+                                    onOpenMessage(message.id)
+                                }
                             }
                         },
                         onLongClick = {
