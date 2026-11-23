@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.Inbox
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material3.HorizontalDivider
@@ -36,6 +37,14 @@ import androidx.compose.ui.unit.sp
 import com.shardmail.app.theme.FullShape
 import com.shardmail.app.theme.HairlineDividerColor
 import com.shardmail.app.ui.navigation.Screen
+
+enum class DrawerDestination(val screen: Screen, val label: String) {
+    INBOX(Screen.Inbox, "Inbox"),
+    ACCOUNTS(Screen.Accounts, "Accounts"),
+    KEYS(Screen.Keys, "Keys"),
+    SETUP_TEST(Screen.SetupTest, "Setup & Test"),
+    ABOUT(Screen.About, "About")
+}
 
 @Composable
 fun ShardDrawerContent(
@@ -102,7 +111,7 @@ fun ShardDrawerContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 DrawerNavigationItem(
-                    label = "Inbox",
+                    label = DrawerDestination.INBOX.label,
                     icon = Icons.Outlined.Inbox,
                     isSelected = currentRoute == Screen.Inbox.route,
                     badge = if (unreadCount > 0) "$unreadCount" else null,
@@ -111,7 +120,7 @@ fun ShardDrawerContent(
                 )
 
                 DrawerNavigationItem(
-                    label = "Accounts",
+                    label = DrawerDestination.ACCOUNTS.label,
                     icon = Icons.Outlined.AccountCircle,
                     isSelected = currentRoute == Screen.Accounts.route,
                     badge = if (accountCount > 0) "$accountCount" else null,
@@ -120,17 +129,24 @@ fun ShardDrawerContent(
                 )
 
                 DrawerNavigationItem(
-                    label = "Keys",
+                    label = DrawerDestination.KEYS.label,
                     icon = Icons.Outlined.Key,
                     isSelected = currentRoute == Screen.Keys.route,
                     onClick = { onNavigate(Screen.Keys) }
                 )
 
                 DrawerNavigationItem(
-                    label = "Setup & Test",
+                    label = DrawerDestination.SETUP_TEST.label,
                     icon = Icons.Outlined.Build,
                     isSelected = currentRoute == Screen.SetupTest.route,
                     onClick = { onNavigate(Screen.SetupTest) }
+                )
+
+                DrawerNavigationItem(
+                    label = DrawerDestination.ABOUT.label,
+                    icon = Icons.Outlined.Info,
+                    isSelected = currentRoute == Screen.About.route,
+                    onClick = { onNavigate(Screen.About) }
                 )
             }
         }

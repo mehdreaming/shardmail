@@ -1,10 +1,12 @@
 package com.shardmail.app
 
+import com.shardmail.app.ui.components.DrawerDestination
 import com.shardmail.app.ui.navigation.Screen
 import com.shardmail.app.ui.screens.validateWorkerUrlInput
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -92,6 +94,15 @@ class ShardMailUnitTest {
         assertEquals("accounts", Screen.Accounts.route)
         assertEquals("keys", Screen.Keys.route)
         assertEquals("setup_test", Screen.SetupTest.route)
+        assertEquals("about", Screen.About.route)
         assertEquals("message_detail/msg-123", Screen.MessageDetail.createRoute("msg-123"))
+    }
+
+    @Test
+    fun testAboutRouteAndDrawerDestination() {
+        assertEquals("about", Screen.About.route)
+        val destinations = DrawerDestination.entries.map { it.screen }
+        assertTrue(destinations.contains(Screen.About))
+        assertEquals("About", DrawerDestination.ABOUT.label)
     }
 }

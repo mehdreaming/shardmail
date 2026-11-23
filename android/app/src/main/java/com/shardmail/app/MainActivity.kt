@@ -61,6 +61,7 @@ import com.shardmail.app.ui.components.ShardBottomNavBar
 import com.shardmail.app.ui.components.ShardDrawerContent
 import com.shardmail.app.ui.components.ShardExtendedFab
 import com.shardmail.app.ui.navigation.Screen
+import com.shardmail.app.ui.screens.AboutScreen
 import com.shardmail.app.ui.screens.AccountsScreen
 import com.shardmail.app.ui.screens.GreetingScreen
 import com.shardmail.app.ui.screens.InboxScreen
@@ -133,7 +134,8 @@ fun ShardMailMain(
     val isMainScreen = currentRoute == Screen.Inbox.route ||
             currentRoute == Screen.Accounts.route ||
             currentRoute == Screen.Keys.route ||
-            currentRoute == Screen.SetupTest.route
+            currentRoute == Screen.SetupTest.route ||
+            currentRoute == Screen.About.route
 
     val currentTab = when {
         currentRoute == Screen.Accounts.route -> BottomNavTab.ACCOUNTS
@@ -379,7 +381,13 @@ fun ShardMailMain(
                             },
                             customDomain = securePreferences.customDomain,
                             lastErrorMessage = lastRefreshError,
-                            onSelectionModeChange = { isInboxSelectionMode = it }
+                            onSelectionModeChange = { isInboxSelectionMode = it },
+                            onBackFromAccountInbox = {
+                                selectedAccountFilter = null
+                                navController.navigate(Screen.Accounts.route) {
+                                    launchSingleTop = true
+                                }
+                            }
                         )
                     }
 
@@ -425,6 +433,19 @@ fun ShardMailMain(
                         SetupTestScreen(
                             securePreferences = securePreferences,
                             repository = repository,
+                            onMenuClick = {
+                                scope.launch { drawerState.open() }
+                            },
+                            onShowSnackbar = { msg ->
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(msg, duration = SnackbarDuration.Short)
+                                }
+                            }
+                        )
+                    }
+
+                    composable(Screen.About.route) {
+                        AboutScreen(
                             onMenuClick = {
                                 scope.launch { drawerState.open() }
                             },

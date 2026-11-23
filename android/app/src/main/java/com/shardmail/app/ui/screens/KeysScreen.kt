@@ -1,7 +1,9 @@
 package com.shardmail.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -129,8 +133,7 @@ fun KeysScreen(
                 label = "WORKER API URL",
                 placeholder = "https://<worker-name>.<subdomain>.workers.dev",
                 value = workerUrl,
-                onValueChange = { workerUrl = it },
-                isScrollable = true
+                onValueChange = { workerUrl = it }
             )
 
             // Admin Password (masked by default, eye-off = hidden)
@@ -337,10 +340,10 @@ private fun InputFieldBlock(
     onValueChange: (String) -> Unit,
     isPassword: Boolean = false,
     showPassword: Boolean = false,
-    isScrollable: Boolean = false,
     onTogglePassword: (() -> Unit)? = null
 ) {
-    val scrollState = rememberScrollState()
+    val focusRequester = remember { FocusRequester() }
+    val interactionSource = remember { MutableInteractionSource() }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -349,58 +352,68 @@ private fun InputFieldBlock(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Row(
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
                 .clip(MaterialTheme.shapes.large)
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .then(if (isScrollable) Modifier.horizontalScroll(scrollState) else Modifier),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = if (isPassword && !showPassword) KeyboardType.Password else KeyboardType.Text
-                    ),
-                    visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 15.sp
-                    ),
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            if (isPassword && onTogglePassword != null) {
-                IconButton(
-                    onClick = onTogglePassword,
-                    modifier = Modifier.size(36.dp)
+                .focusRequester(focusRequester),
+            interactionSource = interactionSource,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = if (isPassword && !showPassword) KeyboardType.Password else KeyboardType.Text
+            ),
+            visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 15.sp
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorationBox = { innerTextField ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) {
+                            focusRequester.requestFocus()
+                        },
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (!showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                        contentDescription = if (!showPassword) "Password is hidden (click to show)" else "Password is visible (click to hide)",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeholder,
+                                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 15.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        innerTextField()
+                    }
+
+                    if (isPassword && onTogglePassword != null) {
+                        IconButton(
+                            onClick = onTogglePassword,
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (!showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                contentDescription = if (!showPassword) "Password is hidden (click to show)" else "Password is visible (click to hide)",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                 }
             }
-        }
+        )
     }
 }

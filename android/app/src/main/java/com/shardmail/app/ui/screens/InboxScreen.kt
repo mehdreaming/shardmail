@@ -72,6 +72,7 @@ fun InboxScreen(
     customDomain: String = "",
     lastErrorMessage: String? = null,
     onSelectionModeChange: (Boolean) -> Unit = {},
+    onBackFromAccountInbox: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
@@ -90,6 +91,11 @@ fun InboxScreen(
     // System Back button exits selection mode without deleting
     BackHandler(enabled = isSelectionMode) {
         selectedMessageIds = emptySet()
+    }
+
+    // System Back button exits per-account inbox back to Accounts
+    BackHandler(enabled = !isSelectionMode && !selectedAccountFilter.isNullOrBlank()) {
+        onBackFromAccountInbox()
     }
 
     val messagesFlow = remember(searchQuery, selectedAccountFilter) {
@@ -182,10 +188,12 @@ fun InboxScreen(
                 SearchPill(
                     query = searchQuery,
                     onQueryChange = { searchQuery = it },
-                    placeholder = "Search in mail",
+                    placeholder = if (!selectedAccountFilter.isNullOrBlank()) "Search in ${selectedAccountFilter.substringBefore('@')}..." else "Search in mail",
                     isRefreshing = isRefreshing,
                     onRefresh = onRefresh,
-                    onMenuClick = onMenuClick
+                    onMenuClick = onMenuClick,
+                    showBackButton = !selectedAccountFilter.isNullOrBlank(),
+                    onBackClick = onBackFromAccountInbox
                 )
             }
         }

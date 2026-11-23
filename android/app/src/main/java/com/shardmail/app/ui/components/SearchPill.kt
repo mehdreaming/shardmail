@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Refresh
@@ -45,6 +46,8 @@ fun SearchPill(
     isRefreshing: Boolean = false,
     onRefresh: () -> Unit = {},
     onMenuClick: () -> Unit = {},
+    showBackButton: Boolean = false,
+    onBackClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "rotation")
@@ -67,14 +70,14 @@ fun SearchPill(
             .padding(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left hamburger button (40dp visual, 48dp minimum touch target handled by IconButton)
+        // Left button: Back button if in sub-screen/account view, else hamburger menu
         IconButton(
-            onClick = onMenuClick,
+            onClick = if (showBackButton) onBackClick else onMenuClick,
             modifier = Modifier.size(40.dp)
         ) {
             Icon(
-                imageVector = Icons.Outlined.Menu,
-                contentDescription = "Open navigation menu",
+                imageVector = if (showBackButton) Icons.AutoMirrored.Outlined.ArrowBack else Icons.Outlined.Menu,
+                contentDescription = if (showBackButton) "Back" else "Open navigation menu",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(24.dp)
             )
