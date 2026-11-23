@@ -10,6 +10,16 @@ codes get a one-tap copy button, and everything works offline thanks to a local 
 
 ---
 
+## Screenshots
+
+Onboarding, Material You style — big headline, one line, and the real app inside the phone.
+
+| <img src="screenshots/01-welcome.png" width="250px" alt="Your inbox, on your own domain" /><br>Your inbox, on your own domain | <img src="screenshots/02-setup.png" width="250px" alt="Set up in minutes" /><br>Set up in minutes | <img src="screenshots/03-loading.png" width="250px" alt="Your inbox, ready in seconds" /><br>Your inbox, ready in seconds |
+| :---: | :---: | :---: |
+| <img src="screenshots/04-inbox.png" width="250px" alt="Codes, one tap away" /><br>Codes, one tap away | <img src="screenshots/05-accounts.png" width="250px" alt="Every address, one screen" /><br>Every address, one screen | <img src="screenshots/06-mail-detail.png" width="250px" alt="The code, front and center" /><br>The code, front and center |
+
+---
+
 ## Features
 
 - **Free custom-domain email** — receive mail at any address on your domain.
